@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>あなたのアイテムカルテ（ミニ診断）</title>
+<style>
+  :root{
+    --card-bg: #fff;
+    --accent1: linear-gradient(90deg,#ff8fb1,#ffbf8a);
+    --radius: 14px;
+  }
+  html,body{height:100%; margin:0; font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;background:linear-gradient(180deg,#fff8fb,#fffef6);}
+  .wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:18px;}
+  .card{width:100%; max-width:520px; background:var(--card-bg); border-radius:var(--radius); box-shadow:0 10px 30px rgba(0,0,0,0.08); padding:18px; box-sizing:border-box;}
+  h1{margin:0; font-size:20px; text-align:center;}
+  p.lead{color:#666; font-size:14px; text-align:center; margin:6px 0 14px;}
+  label{display:block; font-weight:700; margin-top:12px; font-size:14px;}
+  input, select{width:100%; padding:12px; margin-top:8px; border:1px solid #eee; border-radius:10px; font-size:15px; box-sizing:border-box;}
+  .row{display:flex; gap:8px; margin-top:8px;}
+  .row input{flex:1;}
+  button.primary{width:100%; margin-top:14px; padding:14px; font-weight:800; border-radius:12px; border:none; background:var(--accent1); color:white; font-size:16px; cursor:pointer; box-shadow:0 6px 18px rgba(255,140,160,0.18);}
+  .resultWrap{display:none; margin-top:14px; padding:14px; border-radius:12px; background:linear-gradient(180deg,#fff7fb,#fffbf5); border:1px solid rgba(240,210,220,0.6);}
+  .resultTitle{font-weight:800; margin:0 0 6px;}
+  .badge{display:inline-block; padding:6px 10px; border-radius:999px; background:#fff; box-shadow:0 3px 8px rgba(0,0,0,0.06); font-weight:700; margin-top:8px;}
+  .shareRow{display:flex; gap:8px; margin-top:12px;}
+  .shareBtn{flex:1; padding:10px; border-radius:10px; border:none; font-weight:700; cursor:pointer;}
+  .shareLine{background:#00c300; color:white;}
+  .shareCopy{background:#f3f4f6; color:#111;}
+  .small{font-size:13px;color:#666;margin-top:8px;}
+  /* result card style for screenshot appeal */
+  .cardPreview{margin-top:8px; padding:12px; border-radius:10px; background:linear-gradient(180deg,#fff,#fff8fb); box-shadow:inset 0 1px 0 rgba(255,255,255,0.6);}
+  .itemList{margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;}
+  .item{padding:8px 10px; background:#fff; border-radius:8px; box-shadow:0 4px 14px rgba(0,0,0,0.04); font-weight:700;}
+  /* confetti canvas */
+  canvas{position:fixed; left:0; top:0; pointer-events:none; z-index:40;}
+  @media (max-width:420px){
+    .card{padding:14px;}
+    h1{font-size:18px;}
+  }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="wrap">
+  <div class="card" role="main" aria-labelledby="title">
+    <h1 id="title">あなたのアイテムカルテ</h1>
+    <p class="lead">気になるものをいくつか入力すると、“あなたらしさ”を表すカードを作ります。結果はLINEで簡単に共有できます。</p>
+
+    <label>① 今日の気分</label>
+    <select id="mood">
+      <option value="">選んでね</option>
+      <option>リラックス</option><option>ワクワク</option><option>のんびり</option><option>いろいろ興味あり</option>
+    </select>
+
+    <label>② 最近好きなこと</label>
+    <input id="hobby" type="text" placeholder="例：カフェ巡り、映画、料理...">
+
+    <label>③ なんとなく気になるもの（3つ）</label>
+    <div class="row">
+      <input id="i1" type="text" placeholder="例：アクセサリー">
+      <input id="i2" type="text" placeholder="例：バッグ">
+      <input id="i3" type="text" placeholder="例：スイーツ">
+    </div>
+
+    <label>④ 好きな色（自由）</label>
+    <input id="color" type="text" placeholder="例：ピンク、ブルー...">
+
+    <button id="go" class="primary">カルテを作る</button>
+
+    <div id="resultArea" class="resultWrap" aria-live="polite">
+      <div id="resultContent"></div>
+
+      <div class="shareRow">
+        <button id="lineShare" class="shareBtn shareLine">LINEで送る</button>
+        <button id="copyShare" class="shareBtn shareCopy">コピーして共有</button>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button id="nativeShare" class="shareBtn" style="flex:1;background:#4c8ef5;color:#fff;border-radius:10px">スマホ共有</button>
+      </div>
+
+      <p class="small">※このページは【データを送信しません】。プライバシーに配慮した設計です。</p>
+    </div>
+  </div>
+</div>
+
+<script>
+/* --- utilities --- */
+function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+/* --- simple confetti --- */
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let W = canvas.width = window.innerWidth;
+let H = canvas.height = window.innerHeight;
+window.addEventListener('resize', ()=>{ W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight; });
+
+let confettis=[];
+function spawnConfetti(){
+  for(let i=0;i<40;i++){
+    confettis.push({
+      x: Math.random()*W,
+      y: -10 - Math.random()*200,
+      vx: (Math.random()-0.5)*2,
+      vy: 1 + Math.random()*3,
+      r: 6 + Math.random()*8,
+      rot: Math.random()*360,
+      speed: Math.random()*6,
+      color: ['#ff7ea7','#ffd08a','#8fd7ff','#d4a2ff','#ffd1e6'][Math.floor(Math.random()*5)]
+    });
+  }
+}
+let animId;
+function render(){
+  ctx.clearRect(0,0,W,H);
+  confettis.forEach((p,i)=>{
+    p.x += p.vx;
+    p.y += p.vy;
+    p.rot += p.vx*7;
+    ctx.save();
+    ctx.translate(p.x,p.y);
+    ctx.rotate(p.rot*Math.PI/180);
+    ctx.fillStyle = p.color;
+    ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r*0.6);
+    ctx.restore();
+    if(p.y > H+20) confettis.splice(i,1);
+  });
+  animId = requestAnimationFrame(render);
+}
+
+/* --- content logic --- */
+const go = document.getElementById('go');
+const resultArea = document.getElementById('resultArea');
+const resultContent = document.getElementById('resultContent');
+
+const moods = [
+  "今日は穏やかな時間が流れそう。小さな喜びに目を向けてみて。",
+  "ワクワクが隠れている日。気になることに軽く触れてみて。",
+  "ちょっとのんびりモード。好きなものに包まれてリラックスを。",
+  "好奇心が良い刺激に。新しいことに心を向けると◎。"
+];
+
+const advices = [
+  "小さなご褒美を自分にあげると気分が上がります。",
+  "好きな色を取り入れるとラッキーな雰囲気に。",
+  "友達にシェアして反応を楽しんでみて。",
+  "ちょっと遠出してみると新しい発見があるかも。"
+];
+
+function buildResult(data){
+  const itemsHtml = data.items.map(it=>`<div class="item">${escapeHtml(it)}</div>`).join("");
+  const moodLine = data.mood ? `<p><strong>ムード：</strong>${escapeHtml(data.mood)}</p>` : "";
+  const hobbyLine = data.hobby ? `<p><strong>好きなこと：</strong>${escapeHtml(data.hobby)}</p>` : "";
+  const placeLine = data.color ? `<p><strong>好きな色：</strong>${escapeHtml(data.color)}</p>` : "";
+  const msg = rand(moods);
+  const advice = rand(advices);
+
+  return `
+    <div class="cardPreview" id="cardPreview" style="transform-origin:center;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-weight:800">あなたのアイテムカルテ</div>
+        <div class="badge">今日の雰囲気</div>
+      </div>
+      ${moodLine}
+      ${hobbyLine}
+      ${placeLine}
+      <div style="margin-top:10px"><strong>キーアイテム</strong></div>
+      <div class="itemList">${itemsHtml}</div>
+      <p style="margin-top:10px">${escapeHtml(msg)}</p>
+      <p style="color:#666;margin-top:6px">${escapeHtml(advice)}</p>
+    </div>
+  `;
+}
+
+/* --- share-text builder (what user will send) --- */
+function buildShareText(resultHtml){
+  // create a short text summary good for LINE
+  // extract visible text
+  const el = document.createElement('div');
+  el.innerHTML = resultHtml;
+  const title = "あなたのアイテムカルテ（シェア）";
+  const mood = el.querySelector('p strong') ? el.querySelector('p').innerText : '';
+  const items = Array.from(el.querySelectorAll('.item')).map(x=>x.innerText).join(' / ');
+  const summary = `${title}\nキーアイテム：${items}\n${el.querySelectorAll('p')[el.querySelectorAll('p').length-2]?.innerText || ''}\n\n面白かったから送るね！`;
+  return summary;
+}
+
+/* --- button behaviors --- */
+document.getElementById('lineShare').addEventListener('click', ()=>{
+  const text = buildShareText(resultContent.innerHTML);
+  const enc = encodeURIComponent(text);
+  // LINE share web URL (works on mobile)
+  const url = 'https://line.me/R/msg/text/?' + enc;
+  window.location.href = url;
+});
+
+document.getElementById('copyShare').addEventListener('click', async ()=>{
+  const text = buildShareText(resultContent.innerHTML);
+  try{
+    await navigator.clipboard.writeText(text);
+    alert('結果をコピーしました。\nLINEのチャットにペーストして送ってください。');
+  }catch(e){
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+    alert('結果をコピーしました。\nLINEのチャットにペーストして送ってください。');
+  }
+});
+
+document.getElementById('nativeShare').addEventListener('click', async ()=>{
+  const text = buildShareText(resultContent.innerHTML);
+  if(navigator.share){
+    try{
+      await navigator.share({ text });
+    }catch(e){
+      alert('共有がキャンセルされました。手動でコピーして送ってください。');
+    }
+  }else{
+    // fallback to copy
+    try{
+      await navigator.clipboard.writeText(text);
+      alert('この端末は直接共有に対応していません。結果をコピーしました。LINEに貼って送ってね。');
+    }catch(e){
+      alert('共有できませんでした。お手数ですが手動でコピーしてください。');
+    }
+  }
+});
+
+/* --- main generate --- */
+go.addEventListener('click', ()=>{
+  const mood = document.getElementById('mood').value;
+  const hobby = document.getElementById('hobby').value.trim();
+  const i1 = document.getElementById('i1').value.trim();
+  const i2 = document.getElementById('i2').value.trim();
+  const i3 = document.getElementById('i3').value.trim();
+  const color = document.getElementById('color').value.trim();
+  const items = [i1,i2,i3].filter(Boolean);
+
+  if(items.length === 0){
+    alert('「なんとなく気になるもの」を1つ以上入力してください。');
+    return;
+  }
+
+  const data = { mood, hobby, items, color };
+  const html = buildResult(data);
+  resultContent.innerHTML = html;
+  resultArea.style.display = 'block';
+
+  // confetti + small animation
+  spawnConfetti();
+  if(!animId) render();
+  // stop confetti after a bit
+  setTimeout(()=>{ confettis = []; }, 2500);
+
+  // scroll result into view on small screens
+  setTimeout(()=>{ document.getElementById('cardPreview')?.scrollIntoView({behavior:'smooth',block:'center'}); }, 350);
+});
+
+/* stop animation when page hidden */
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden){ cancelAnimationFrame(animId); animId = null; } else if(resultArea.style.display==='block' && !animId){ render(); } });
+
+</script>
+</body>
+</html>
