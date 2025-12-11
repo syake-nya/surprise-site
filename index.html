@@ -1,212 +1,194 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>３つのキーワード診断</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>今日のあなたチェック</title>
+<style>
+  :root{
+    --radius: 14px;
+    --shadow: 0 6px 18px rgba(0,0,0,0.08);
+  }
 
-    <!-- html2canvas（画像化用） -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  body{
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+    background: #faf7ff;
+    margin:0;
+    padding:16px;
+    display:flex;
+    justify-content:center;
+  }
 
-    <style>
-        body {
-            font-family: "Helvetica Neue", Arial, sans-serif;
-            padding: 20px;
-            background: #fff5f9;
-        }
+  .card{
+    width:100%;
+    max-width:480px;
+    background:#fff;
+    padding:22px 18px;
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+  }
 
-        h1 {
-            text-align: center;
-            color: #cc5f87;
-        }
+  h1{
+    font-size:20px;
+    margin-top:0;
+    text-align:center;
+  }
 
-        label {
-            font-size: 1.2em;
-            color: #444;
-            margin-top: 10px;
-            display: block;
-        }
+  label{
+    font-weight:600;
+    margin-top:14px;
+    font-size:15px;
+    display:block;
+  }
 
-        input {
-            width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            border-radius: 10px;
-            border: 1px solid #ccc;
-            font-size: 1.1em;
-        }
+  input, select{
+    width:100%;
+    padding:12px;
+    margin-top:6px;
+    border:1px solid #ddd;
+    border-radius:10px;
+    font-size:16px;
+  }
 
-        button {
-            background: #ff76a5;
-            color: white;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 12px;
-            margin-top: 15px;
-            font-size: 1.2em;
-            width: 100%;
-        }
+  .row{
+    display:flex;
+    gap:8px;
+    margin-top:6px;
+  }
 
-        #cardPreview {
-            margin-top: 25px;
-            width: 100%;
-            padding: 20px;
-            background: #ffe4ef;
-            border-radius: 12px;
-            text-align: center;
-            border: 2px solid #ffb7d7;
-        }
+  .row input{
+    flex:1;
+  }
 
-        .share-btn {
-            background: #94bfff;
-        }
+  button{
+    width:100%;
+    margin-top:22px;
+    padding:14px;
+    font-size:17px;
+    font-weight:700;
+    border:none;
+    border-radius:12px;
+    background:linear-gradient(90deg,#ff7ea7,#ffb27d);
+    color:white;
+    box-shadow:0 4px 10px rgba(255,126,167,0.4);
+    cursor:pointer;
+  }
 
-        /* ----- かわいいピンク画像カード（1080×1350） ----- */
-        .cuteCard {
-            width: 1080px;
-            height: 1350px;
-            background: #fff7fb;
-            border-radius: 40px;
-            padding: 80px;
-            text-align: center;
-            border: 4px solid #ffd3e6;
-            box-shadow: 0 8px 20px rgba(255, 170, 200, 0.3);
-            margin: 40px auto;
-        }
+  .result{
+    display:none;
+    margin-top:20px;
+    padding:18px;
+    border-radius:12px;
+    background:#fff7fd;
+    border:1px solid #f0ddea;
+    font-size:15px;
+    line-height:1.6;
+  }
 
-        .cute-title {
-            font-size: 60px;
-            color: #cc6f8e;
-            margin-bottom: 80px;
-        }
-
-        .cute-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            font-size: 70px;
-            color: #a85f7c;
-            line-height: 2;
-        }
-
-        .cute-footer {
-            margin-top: 120px;
-            font-size: 48px;
-            color: #c27b95;
-        }
-
-        .save-btn {
-            display: block;
-            margin: 20px auto 50px;
-            padding: 15px 30px;
-            font-size: 32px;
-            background: #ffb7d6;
-            color: white;
-            border: none;
-            border-radius: 20px;
-            box-shadow: 0 4px 10px rgba(255, 120, 160, 0.3);
-        }
-
-        /* スマホでは画像カードを縮小表示 */
-        @media (max-width: 600px) {
-            .cuteCard {
-                transform: scale(0.28);
-                transform-origin: top center;
-                margin-bottom: -800px; /* スマホで隙間調整 */
-            }
-        }
-    </style>
+  /* スマホでテキストがギュッとならないため */
+  @media (max-width:430px){
+    body{
+      padding:10px;
+    }
+    .card{
+      padding:18px 14px;
+    }
+    h1{
+      font-size:19px;
+    }
+  }
+</style>
 </head>
-
 <body>
+<div class="card">
+  <h1>今日のあなたチェック</h1>
+  <p style="text-align:center; color:#666; font-size:14px; margin-top:-6px;">
+    いくつかの質問に答えると今日の雰囲気がわかります。
+  </p>
 
-    <h1>３つのキーワード診断</h1>
+  <label>① 今日の気分</label>
+  <select id="mood">
+    <option value="">選択してください</option>
+    <option>落ち着いている</option>
+    <option>ワクワクしている</option>
+    <option>ちょっと疲れている</option>
+    <option>新しいことをしたい気分</option>
+    <option>リラックスしたい</option>
+  </select>
 
-    <label>気になるもの 1</label>
-    <input id="item1" type="text">
+  <label>② 最近ハマってること</label>
+  <input id="hobby" type="text" placeholder="例：カフェ巡り、動画、読書など">
 
-    <label>気になるもの 2</label>
-    <input id="item2" type="text">
+  <label>③ 行ってみたい場所</label>
+  <input id="place" type="text" placeholder="例：海、温泉、カフェなど">
 
-    <label>気になるもの 3</label>
-    <input id="item3" type="text">
+  <label>④ なんとなく“気になるアイテム”を3つ</label>
+  <div class="row">
+    <input id="i1" type="text" placeholder="例：アクセサリー">
+    <input id="i2" type="text" placeholder="例：バッグ">
+    <input id="i3" type="text" placeholder="例：スイーツ">
+  </div>
 
-    <button id="go">診断する</button>
+  <label>⑤ 好きな色</label>
+  <input id="color" type="text" placeholder="例：ピンク、白、ブルーなど">
 
-    <div id="cardPreview">
-        <h3>診断結果（プレビュー）</h3>
-        <p id="p1"></p>
-        <p id="p2"></p>
-        <p id="p3"></p>
-    </div>
+  <button id="btn">診断する</button>
 
-    <button class="share-btn" id="share">LINEで共有</button>
+  <div id="result" class="result"></div>
+</div>
 
+<script>
+  function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
-    <!-- ここから画像生成用のピンクカード -->
-    <div id="result-card" class="cuteCard">
-        <h2 class="cute-title">💗 あなたの3つのキーワード 💗</h2>
-        <ul class="cute-list">
-            <li id="item1-output"></li>
-            <li id="item2-output"></li>
-            <li id="item3-output"></li>
-        </ul>
-        <p class="cute-footer">✨ やさしい雰囲気を表す3つのポイント ✨</p>
-    </div>
+  const messages = [
+    "今日は、あなたの心地よさが周りにも伝わりやすい日。",
+    "直感が冴えているタイミング。やってみたいことには素直に挑戦すると◎。",
+    "小さな嬉しさが積み重なりそうな流れ。",
+    "深呼吸すると気持ちが整う日。",
+    "好きなものを大切にすると良い流れに。"
+  ];
 
-    <button onclick="downloadImage()" class="save-btn">画像を保存する</button>
+  const adviceSet = [
+    "お気に入りのものに触れる時間が良いリフレッシュに。",
+    "心が動く方を選んでみると新しい発見がありそう。",
+    "ちょっとした変化を楽しむと◎。",
+    "心が向く場所へ行くと良いヒントが拾えます。",
+    "温かい飲み物でひと息つくと良いかも。"
+  ];
 
+  document.getElementById("btn").addEventListener("click", () => {
+    const mood = document.getElementById("mood").value;
+    const hobby = document.getElementById("hobby").value.trim();
+    const place = document.getElementById("place").value.trim();
+    const color = document.getElementById("color").value.trim();
 
-    <script>
-        // ====== 診断処理（元コード＋画像カード反映） ======
-        document.getElementById("go").addEventListener("click", () => {
-            const i1 = document.getElementById("item1").value;
-            const i2 = document.getElementById("item2").value;
-            const i3 = document.getElementById("item3").value;
+    const a = document.getElementById("i1").value.trim();
+    const b = document.getElementById("i2").value.trim();
+    const c = document.getElementById("i3").value.trim();
+    const items = [a,b,c].filter(Boolean);
 
-            document.getElementById("p1").textContent = "① " + i1;
-            document.getElementById("p2").textContent = "② " + i2;
-            document.getElementById("p3").textContent = "③ " + i3;
+    const res = document.getElementById("result");
 
-            // 画像カードへ反映
-            setItems(i1, i2, i3);
-        });
+    if(items.length === 0){
+      res.style.display = "block";
+      res.innerHTML = "<strong>“気になるアイテム”を1つ以上入力してください。</strong>";
+      return;
+    }
 
+    let html = `<h3 style="margin-top:0;">診断結果</h3>`;
 
-        // ====== LINEで共有 ======
-        document.getElementById("share").addEventListener("click", () => {
-            const text =
-                `３つのキーワード\n` +
-                `① ${document.getElementById("item1").value}\n` +
-                `② ${document.getElementById("item2").value}\n` +
-                `③ ${document.getElementById("item3").value}`;
+    if(mood) html += `<p><strong>今日のムード：</strong>${mood}</p>`;
+    if(hobby) html += `<p><strong>最近ハマっていること：</strong>${hobby}</p>`;
+    if(place) html += `<p><strong>気になる場所：</strong>${place}</p>`;
+    if(color) html += `<p><strong>好きな色：</strong>${color}</p>`;
+    html += `<p><strong>キーアイテム：</strong>${items.join(" / ")}</p>`;
+    html += `<p>${rand(messages)}</p>`;
+    html += `<p>${rand(adviceSet)}</p>`;
+    html += `<p style="color:#666; font-size:13px;">回答内容をもとに今日の雰囲気を読み取りました。</p>`;
 
-            const url = `https://line.me/R/share?text=${encodeURIComponent(text)}`;
-
-            window.open(url, "_blank");
-        });
-
-
-        // ====== カードに値を入れる ======
-        function setItems(item1, item2, item3) {
-            document.getElementById("item1-output").textContent = "① " + item1;
-            document.getElementById("item2-output").textContent = "② " + item2;
-            document.getElementById("item3-output").textContent = "③ " + item3;
-        }
-
-
-        // ====== 画像を保存 ======
-        function downloadImage() {
-            const card = document.getElementById("result-card");
-
-            html2canvas(card, { scale: 2 }).then(canvas => {
-                const link = document.createElement("a");
-                link.download = "result.png";
-                link.href = canvas.toDataURL();
-                link.click();
-            });
-        }
-    </script>
-
+    res.style.display = "block";
+    res.innerHTML = html;
+  });
+</script>
 </body>
 </html>
