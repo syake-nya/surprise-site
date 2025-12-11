@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>今日のあなたチェック</title>
+
 <style>
   :root{
     --radius: 14px;
@@ -18,7 +19,7 @@
     display:flex;
     justify-content:center;
     width:100vw;
-    overflow-x:hidden;   /* 横スクロール完全防止 */
+    overflow-x:hidden;
   }
 
   .card{
@@ -54,7 +55,6 @@
     box-sizing:border-box;
   }
 
-  /* ★ スマホで横幅がはみ出す原因を完全修正した部分 ★ */
   .row{
     display:flex;
     flex-wrap:nowrap;
@@ -66,10 +66,9 @@
 
   .row input{
     flex:1;
-    min-width:0;          /* はみ出し防止の最重要ポイント */
+    min-width:0;
     box-sizing:border-box;
   }
-  /* ★ ここまで重要 ★ */
 
   button{
     width:100%;
@@ -88,15 +87,67 @@
   .result{
     display:none;
     margin-top:20px;
-    padding:18px;
-    border-radius:12px;
-    background:#fff7fd;
-    border:1px solid #f0ddea;
-    font-size:15px;
-    line-height:1.6;
   }
 
-  /* スマホ最適化 */
+  /* LINE共有ボタン */
+  #shareLine{
+    width:100%;
+    margin-top:12px;
+    padding:12px;
+    background:#06C755;
+    color:white;
+    font-size:16px;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    display:none;
+  }
+
+  /* 🌸 ふわふわ韓国ガーリー風カード */
+  .result-card {
+    background: #ffffffee;
+    border-radius: 26px;
+    padding: 26px 22px;
+    border: 2px solid rgba(255, 210, 240, 0.9);
+    box-shadow:
+      0 0 30px rgba(255, 160, 220, 0.28),
+      0 0 12px rgba(255, 200, 230, 0.25),
+      0 4px 14px rgba(0,0,0,0.05);
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(6px);
+  }
+
+  .result-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left:0;
+    width:100%;
+    height: 14px;
+    background: linear-gradient(90deg, #ffd6e9, #ffe6f5, #ffd8ef);
+    opacity: 0.9;
+    border-radius: 26px 26px 0 0;
+  }
+
+  .result-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #ff8fbc;
+    text-align: center;
+    margin: 6px 0 18px 0;
+    text-shadow: 0 2px 6px rgba(255,150,200,0.35);
+  }
+
+  .result-card p {
+    font-size: 15.5px;
+    line-height: 1.7;
+    color: #555;
+  }
+
   @media (max-width:430px){
     .card{
       padding:18px 14px;
@@ -107,6 +158,7 @@
   }
 </style>
 </head>
+
 <body>
 <div class="card">
   <h1>今日のあなたチェック</h1>
@@ -141,6 +193,7 @@
   <input id="color" type="text" placeholder="例：ピンク、白、ブルーなど">
 
   <button id="btn">診断する</button>
+  <button id="shareLine">LINEで共有する</button>
 
   <div id="result" class="result"></div>
 </div>
@@ -180,23 +233,38 @@
     if(items.length === 0){
       res.style.display = "block";
       res.innerHTML = "<strong>“気になるアイテム”を1つ以上入力してください。</strong>";
+      document.getElementById("shareLine").style.display = "none";
       return;
     }
 
-    let html = `<h3 style="margin-top:0;">診断結果</h3>`;
+    let html = `
+      <div class="result-card">
+        <div class="result-title">今日のあなた診断</div>
+    `;
 
     if(mood) html += `<p><strong>今日のムード：</strong>${mood}</p>`;
     if(hobby) html += `<p><strong>最近ハマっていること：</strong>${hobby}</p>`;
-    if(place) html += `<p><strong>気になる場所：</strong>${place}</p>`;
+    if(place) html += `<p><strong>行ってみたい場所：</strong>${place}</p>`;
     if(color) html += `<p><strong>好きな色：</strong>${color}</p>`;
     html += `<p><strong>キーアイテム：</strong>${items.join(" / ")}</p>`;
     html += `<p>${rand(messages)}</p>`;
     html += `<p>${rand(adviceSet)}</p>`;
-    html += `<p style="color:#666; font-size:13px;">回答内容をもとに今日の雰囲気を読み取りました。</p>`;
+    html += `<p style="color:#777; font-size:13px;">回答内容をもとに今日の雰囲気を読み取りました。</p>`;
+    html += `</div>`; // カードを閉じる
 
     res.style.display = "block";
     res.innerHTML = html;
+
+    // LINE共有ボタンを表示
+    document.getElementById("shareLine").style.display = "block";
+  });
+
+  document.getElementById("shareLine").addEventListener("click", () => {
+    const text = document.getElementById("result").innerText;
+    const url = "https://line.me/R/share?text=" + encodeURIComponent(text);
+    window.open(url);
   });
 </script>
+
 </body>
 </html>
