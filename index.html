@@ -30,6 +30,7 @@
     border-radius:var(--radius);
     box-shadow:var(--shadow);
     box-sizing:border-box;
+    position: relative;
   }
 
   h1{
@@ -89,21 +90,6 @@
     margin-top:20px;
   }
 
-  /* LINE共有ボタン */
-  #shareLine{
-    width:100%;
-    margin-top:12px;
-    padding:12px;
-    background:#06C755;
-    color:white;
-    font-size:16px;
-    border:none;
-    border-radius:10px;
-    cursor:pointer;
-    display:none;
-  }
-
-  /* 🌸 ふわふわ韓国ガーリー風カード */
   .result-card {
     background: #ffffffee;
     border-radius: 26px;
@@ -119,6 +105,19 @@
     position: relative;
     overflow: hidden;
     backdrop-filter: blur(6px);
+  }
+
+  /* 背景の透けアイテム文字 */
+  .items-bg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 50px;
+    color: rgba(255, 150, 200, 0.08);
+    pointer-events: none;
+    white-space: nowrap;
+    text-align: center;
   }
 
   .result-card::before {
@@ -140,12 +139,16 @@
     text-align: center;
     margin: 6px 0 18px 0;
     text-shadow: 0 2px 6px rgba(255,150,200,0.35);
+    position: relative;
+    z-index: 1;
   }
 
   .result-card p {
     font-size: 15.5px;
     line-height: 1.7;
     color: #555;
+    position: relative;
+    z-index: 1;
   }
 
   @media (max-width:430px){
@@ -192,8 +195,25 @@
   <label>⑤ 好きな色</label>
   <input id="color" type="text" placeholder="例：ピンク、白、ブルーなど">
 
+  <label>⑥ 好きな食べ物</label>
+  <input id="food" type="text" placeholder="例：チョコ、ケーキ、スイーツ">
+
+  <label>⑦ よく行くお店・ブランド</label>
+  <input id="brand" type="text" placeholder="例：スタバ、無印、ZARA">
+
+  <label>⑧ 今のあなたは色で表すと何色？</label>
+  <input id="currentColor" type="text" placeholder="例：青、ピンク、黄">
+
+  <label>⑨ 朝の準備で一番時間を使うのは？</label>
+  <input id="morningTime" type="text" placeholder="例：ヘアセット、メイク、服選び">
+
+  <label>⑩ 気分転換したいときに手に取るのは？</label>
+  <input id="refreshItem" type="text" placeholder="例：スマホ、本、お菓子">
+
+  <label>⑪ 今頭に浮かんだ形は？</label>
+  <input id="shape" type="text" placeholder="例：丸、三角、星">
+
   <button id="btn">診断する</button>
-  <button id="shareLine">LINEで共有する</button>
 
   <div id="result" class="result"></div>
 </div>
@@ -222,6 +242,12 @@
     const hobby = document.getElementById("hobby").value.trim();
     const place = document.getElementById("place").value.trim();
     const color = document.getElementById("color").value.trim();
+    const food = document.getElementById("food").value.trim();
+    const brand = document.getElementById("brand").value.trim();
+    const currentColor = document.getElementById("currentColor").value.trim();
+    const morningTime = document.getElementById("morningTime").value.trim();
+    const refreshItem = document.getElementById("refreshItem").value.trim();
+    const shape = document.getElementById("shape").value.trim();
 
     const a = document.getElementById("i1").value.trim();
     const b = document.getElementById("i2").value.trim();
@@ -233,12 +259,12 @@
     if(items.length === 0){
       res.style.display = "block";
       res.innerHTML = "<strong>“気になるアイテム”を1つ以上入力してください。</strong>";
-      document.getElementById("shareLine").style.display = "none";
       return;
     }
 
     let html = `
       <div class="result-card">
+        <div class="items-bg">${items.join(" / ")}</div>
         <div class="result-title">今日のあなた診断</div>
     `;
 
@@ -246,25 +272,21 @@
     if(hobby) html += `<p><strong>最近ハマっていること：</strong>${hobby}</p>`;
     if(place) html += `<p><strong>行ってみたい場所：</strong>${place}</p>`;
     if(color) html += `<p><strong>好きな色：</strong>${color}</p>`;
+    if(food) html += `<p><strong>好きな食べ物：</strong>${food}</p>`;
+    if(brand) html += `<p><strong>よく行くお店・ブランド：</strong>${brand}</p>`;
+    if(currentColor) html += `<p><strong>今のあなたを色で表すと：</strong>${currentColor}</p>`;
+    if(morningTime) html += `<p><strong>朝の準備で一番時間を使うのは：</strong>${morningTime}</p>`;
+    if(refreshItem) html += `<p><strong>気分転換したいときに手に取るのは：</strong>${refreshItem}</p>`;
+    if(shape) html += `<p><strong>今頭に浮かんだ形：</strong>${shape}</p>`;
     html += `<p><strong>キーアイテム：</strong>${items.join(" / ")}</p>`;
     html += `<p>${rand(messages)}</p>`;
     html += `<p>${rand(adviceSet)}</p>`;
-    html += `</div>`; // カードを閉じる
+    html += `</div>`;
 
     res.style.display = "block";
     res.innerHTML = html;
-
-    // LINE共有ボタンを表示
-    document.getElementById("shareLine").style.display = "block";
-  });
-
-  document.getElementById("shareLine").addEventListener("click", () => {
-    const text = document.getElementById("result").innerText;
-    const url = "https://line.me/R/share?text=" + encodeURIComponent(text);
-    window.open(url);
   });
 </script>
 
 </body>
 </html>
-
